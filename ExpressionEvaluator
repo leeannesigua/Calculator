@@ -1,0 +1,145 @@
+package testers;
+/* Lee Anne Sigua
+   masc0839
+ */
+
+import java.util.StringTokenizer;
+
+import data_structures.*;
+
+public class ExpressionEvaluator {
+	private Stack<String> stack;
+	private Queue<String> queue;
+	
+	public ExpressionEvaluator(){
+		stack= new Stack<String>();
+		queue = new Queue<String>();
+		
+	}
+	public String processInput(String s){
+		if(s.equals("")||s.equals(" "))
+			return s;
+		StringTokenizer st = new StringTokenizer(s);
+		String answer = " ", token="";
+		
+		try {
+		while( st.hasMoreTokens() ){
+			String previous = token; //previous
+			token = st.nextToken();	//current
+			
+			if(token.equals("(")){	//declare which token to compare
+				if ( isDouble(previous))  //checks if number is in front of parenthesis
+					throw new RuntimeException();
+				
+				stack.push(token);	//current token ("(")
+			}
+			if(token.equals(")")){
+				while(!stack.peek().equals("(")){
+					if(isOperator(stack.peek()))
+						queue.enqueue(stack.pop());
+				}
+				stack.pop();
+				
+			}
+			if(isOperator(token)){
+				while(!stack.isEmpty() 
+						&& !stack.peek().equals("(") 
+						&& precedence(stack.peek()) >= precedence(token)){
+					queue.enqueue(stack.pop());
+				} //end while 
+				
+				stack.push(token);
+				
+			} //end token operator
+			
+			
+			if(isDouble(token)){
+				queue.enqueue(token);
+			}
+		} // end for each token do
+		
+		while(!stack.isEmpty()){
+			queue.enqueue(stack.pop());
+		}
+		
+		if(queue.contains("("))				//queue should not have parenthesis
+			throw new RuntimeException();
+		
+		//the queue now has the postfix expression
+
+			
+		//An algorithm for evaluating a postfix expression:
+		
+		while(!queue.isEmpty()){
+			token = queue.dequeue();
+			
+			if (isDouble(token)){
+					stack.push(token);
+			}
+			else if(isOperator(token)){
+				double num1 = Double.parseDouble(stack.pop());
+				double num2 = Double.parseDouble(stack.pop());
+				
+				// perform num2 operator num1 and push result on stack
+				if(token.equals("+"))
+					stack.push(Double.toString(num2 + num1)); 
+				if(token.equals("-"))
+					stack.push(Double.toString(num2 - num1));
+				if(token.equals("*"))
+					stack.push(Double.toString(num2 * num1));
+				if(token.equals("/")){
+					if (num1 == 0)
+						throw new RuntimeException();
+					stack.push(Double.toString(num2 / num1));
+				}
+				if(token.equals("^"))
+					stack.push(Double.toString(Math.pow(num2,num1)));
+			}
+			
+		}
+		if(stack.size() != 1)	
+			throw new RuntimeException();
+		answer = stack.pop();
+		return answer;
+	}
+	catch(Exception e) {
+		stack.makeEmpty();
+		queue.makeEmpty();
+		return "ERROR";
+	}
+	}
+	private int precedence (String token){
+		if(token.equals("^"))
+			return 3;
+		if(token.equals("*") || token.equals("/"))
+			return 2;
+		if(token.equals("+") || token.equals("-"))
+			return 1;
+		return 0;
+	}
+	
+	private boolean isOperator(String token){
+		if (token.equals("^"))
+			return true;
+		if (token.equals("*"))
+			return true;
+		if (token.equals("/"))
+			return true;
+		if (token.equals("+"))
+			return true;
+		if (token.equals("-"))
+			return true;
+		return false;
+	}
+	
+	private boolean isDouble(String token){ //checks for number
+		try{
+			Double.parseDouble(token);
+			return true;
+		}
+		catch (NumberFormatException e){
+			return false;
+		}
+	}
+	
+}
